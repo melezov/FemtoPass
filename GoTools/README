@@ -1,0 +1,7 @@
+This directory contains the binaries required in order to compile FemtoPass.
+
+GoRC.exe   (v1.0.0.0)  - Resource compiler
+GoAsm.exe  (v0.58.0.3) - Assembler
+GoLink.exe (v0.28.0.0) - Linker
+
+You can find out more about Jeremy Gordon's GoTools at http://www.godevtool.com/

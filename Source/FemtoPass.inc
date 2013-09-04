@@ -36,6 +36,7 @@
         #define FILE_ATTRIBUTE_NORMAL       80h
 
         #define ENABLE_ECHO_INPUT            4h
+        #define CP_UTF8                  0FDE9h
 
         #define INVALID_HANDLE_VALUE        -1
         #define STD_OUTPUT_HANDLE          -11

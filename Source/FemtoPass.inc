@@ -6,22 +6,6 @@
 
 ; #############################################################################
 
-        #ifdef UNICODE
-        ;{
-            #define dss dus
-            #define AW  W
-            #define S   2
-        ;}
-        #else
-        ;{
-            #define dss db
-            #define AW  A
-            #define S   1
-        ;}
-        #endif // UNICODE
-
-; #############################################################################
-
         #define MAX_PASSWORD                80h
 
 ; =============================================================================
@@ -38,15 +22,7 @@
         #define ENABLE_ECHO_INPUT            4h
         #define CP_UTF8                  0FDE9h
 
-        #define INVALID_HANDLE_VALUE        -1
         #define STD_OUTPUT_HANDLE          -11
-
-; =============================================================================
-
-        #define IMP
-
-        #define CreateFile       IMP ## CreateFile  ## AW
-        #define ReadConsole      IMP ## ReadConsole ## AW
 
 ; =============================================================================
 

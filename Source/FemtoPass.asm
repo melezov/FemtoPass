@@ -4,21 +4,9 @@
 
 ; #############################################################################
 
-    DATA SECTION ".data"
-
-; =============================================================================
-
-        #define MAX_PASSWORD         128
-        #define MAX_PASSWORD_UTF     (MAX_PASSWORD * 3)
-
-        szConin        dss    "CONIN$", 0h
-        szPassword     dss    MAX_PASSWORD dup ?
-        szPasswordUtf8 db     MAX_PASSWORD_UTF dup ?
-        ddConinHandle  dd     ?
-        ddConinMode    dd     ?
-        ddCharsRead    dd     ?
-        ddBytesInUtf8  dd     ?
-        ddBytesWritten dd     ?
+        #define MAX_PASSWORD          400h
+        #define MAX_PASSWORD_UNICODE  (MAX_PASSWORD * 2)
+        #define MAX_PASSWORD_UTF8     (MAX_PASSWORD * 3)
 
 ; #############################################################################
 
@@ -28,64 +16,82 @@
 
         FemtoPass_Entry:
         ;{
-            xor esi, esi
-            inc esi ; 1
-            invoke CreateFile, ADDR szConin, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
-            cmp eax, INVALID_HANDLE_VALUE
-            je >
-            mov [ ddConinHandle ], eax
+            sub esp, MAX_PASSWORD_UNICODE + MAX_PASSWORD_UTF8
 
-            inc esi ; 2
-            invoke GetConsoleMode, [ ddConinHandle ], ADDR ddConinMode
-            or eax, eax
+            xor ebp, ebp
+            inc ebp ; 1
+            invoke CreateFileA, ADDR szConin, GENERIC_READ | GENERIC_WRITE, ebp /* FILE_SHARE_READ */, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
+            inc eax
             je >
-            mov eax, [ ddConinMode ]
+            dec eax
+            mov ebx, eax
 
-            inc esi ; 3
-            and eax, ~ENABLE_ECHO_INPUT
-            invoke SetConsoleMode, [ ddConinHandle ], eax
-            or eax, eax
+            inc ebp ; 2
+            push esp
+            invoke GetConsoleMode, ebx, esp
+            pop esi
+            test eax, eax
             je >
 
-            inc esi ; 4
-            invoke ReadConsole, [ ddConinHandle ], ADDR szPassword, MAX_PASSWORD, ADDR ddCharsRead, NULL
-            or eax, eax
+            inc ebp ; 3
+            and esi, ~ENABLE_ECHO_INPUT
+            invoke SetConsoleMode, ebx, esi
+            test eax, eax
             je >
 
-            inc esi ; 5
-            invoke SetConsoleMode, [ ddConinHandle ], [ ddConinMode ]
-            or eax, eax
+            inc ebp ; 4
+            mov ecx, esp
+            push esp
+            mov edx, esp
+            invoke ReadConsoleW, ebx, ecx, MAX_PASSWORD, edx, NULL
+            pop edi
+            test eax, eax
+            je >
+
+            inc ebp ; 5
+            invoke SetConsoleMode, ebx, esi
+            test eax, eax
           : je >
 
-            inc esi ; 6
-            mov ebx, [ ddCharsRead ]
-            dec ebx
-            dec ebx
-            invoke WideCharToMultiByte, CP_UTF8, 0, ADDR szPassword, ebx, ADDR szPasswordUtf8, MAX_PASSWORD_UTF, NULL, NULL
-            or eax, eax
+            inc ebp ; 6
+            xor eax, eax
+            mov ecx, esp
+            dec edi
+            dec edi
+            mov ebx, MAX_PASSWORD_UTF8
+            lea edx, [ esp + ebx ]
+            invoke WideCharToMultiByte, CP_UTF8, eax, ecx, edi, edx, ebx, eax, eax
+            test eax, eax
             je >
-            mov [ ddBytesInUtf8 ], eax
+            mov esi, eax
 
-            inc esi ; 7
+            inc ebp ; 7
             invoke GetStdHandle, STD_OUTPUT_HANDLE
-            cmp eax, INVALID_HANDLE_VALUE
+            inc eax
+            je >
+            dec eax
+
+            inc ebp ; 8
+            lea ecx, [ esp + ebx ]
+            push esp
+            mov edx, esp
+            invoke WriteFile, eax, ecx, esi, edx, NULL
+            pop ebx
+            test eax, eax
             je >
 
-            inc esi ; 8
-            invoke WriteFile, eax, ADDR szPasswordUtf8, [ ddBytesInUtf8 ], ADDR ddBytesWritten, NULL
-            or eax, eax
-            je >
+            inc ebp ; 9
+            mov eax, esi
+            sub eax, ebx
+            je >.end
 
-            inc esi ; 9
-            mov eax, [ ddBytesInUtf8 ]
-            sub eax, [ ddBytesWritten ]
-            jne >
-            ;{
-                ret
-            ;}
-
-          : mov eax, esi
+          : mov eax, ebp
+      .end: add esp, MAX_PASSWORD_UNICODE + MAX_PASSWORD_UTF8
             ret
         ;}
+
+; #############################################################################
+
+      szConin: db "CONIN$", 0h
 
 ; #############################################################################
